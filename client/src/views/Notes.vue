@@ -2,111 +2,111 @@
   <div class="notes-page">
     <Navigation />
     
-    <div class="container">
-      <div class="page-header">
-        <h1>Мои заметки</h1>
-        <router-link to="/note/new" class="new-note-btn">+ Новая заметка</router-link>
-      </div>
+    <div class="notes-layout">
+      <TagsSidebar />
+      
+      <div class="main-content">
+        <div class="container">
+          <div class="page-header">
+            <h1>Мои заметки</h1>
+            <router-link to="/note/new" class="new-note-btn">+ Новая заметка</router-link>
+          </div>
 
-      <div class="filters">
-        <div class="search-box">
-          <input
-            v-model="notesStore.searchQuery"
-            type="text"
-            placeholder="Поиск заметок..."
-            class="search-input"
-          />
-        </div>
-
-        <div class="filter-controls">
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              v-model="notesStore.showArchived"
-            />
-            Показать архивированные
-          </label>
-
-          <Dropdown label="Сортировка">
-            <div class="dropdown-item" @click="notesStore.sortBy = 'updatedAt'; notesStore.sortOrder = 'desc'">
-              По дате обновления (новые)
-            </div>
-            <div class="dropdown-item" @click="notesStore.sortBy = 'updatedAt'; notesStore.sortOrder = 'asc'">
-              По дате обновления (старые)
-            </div>
-            <div class="dropdown-item" @click="notesStore.sortBy = 'createdAt'; notesStore.sortOrder = 'desc'">
-              По дате создания (новые)
-            </div>
-            <div class="dropdown-item" @click="notesStore.sortBy = 'title'; notesStore.sortOrder = 'asc'">
-              По названию (А-Я)
-            </div>
-          </Dropdown>
-
-          <div class="tags-filter">
-            <span v-for="tag in notesStore.tags" :key="tag.id" class="tag-filter-item">
+          <div class="filters">
+            <div class="search-box">
               <input
-                type="checkbox"
-                :value="tag.id"
-                v-model="notesStore.selectedTags"
-                :id="`tag-${tag.id}`"
+                v-model="notesStore.searchQuery"
+                type="text"
+                placeholder="Поиск заметок..."
+                class="search-input"
               />
-              <label :for="`tag-${tag.id}`" class="tag-label">
-                <TagItem :tag="tag" />
+            </div>
+
+            <div class="filter-controls">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  v-model="notesStore.showFavorites"
+                />
+                Только избранные
               </label>
-            </span>
-          </div>
-        </div>
-      </div>
 
-      <div v-if="notesStore.loading" class="loading">Загрузка...</div>
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  v-model="notesStore.showArchived"
+                />
+                Показать архивированные
+              </label>
 
-      <div v-else-if="notesStore.filteredNotes.length === 0" class="empty-state">
-        <p>Нет заметок</p>
-        <router-link to="/note/new" class="create-link">Создать первую заметку</router-link>
-      </div>
-
-      <div v-else class="notes-grid">
-        <div
-          v-for="note in notesStore.filteredNotes"
-          :key="note.id"
-          class="note-card"
-          @click="$router.push(`/note/${note.id}`)"
-        >
-          <div class="note-header">
-            <h3>{{ note.title }}</h3>
-            <div class="note-actions">
-              <button
-                @click.stop="notesStore.toggleFavorite(note.id)"
-                class="icon-btn"
-                :class="{ active: note.isFavorite }"
-              >
-                ⭐
-              </button>
-              <button
-                @click.stop="notesStore.toggleArchive(note.id)"
-                class="icon-btn"
-              >
-                📦
-              </button>
+              <Dropdown label="Сортировка">
+                <div class="dropdown-item" @click="notesStore.sortBy = 'updatedAt'; notesStore.sortOrder = 'desc'">
+                  По дате обновления (новые)
+                </div>
+                <div class="dropdown-item" @click="notesStore.sortBy = 'updatedAt'; notesStore.sortOrder = 'asc'">
+                  По дате обновления (старые)
+                </div>
+                <div class="dropdown-item" @click="notesStore.sortBy = 'createdAt'; notesStore.sortOrder = 'desc'">
+                  По дате создания (новые)
+                </div>
+                <div class="dropdown-item" @click="notesStore.sortBy = 'title'; notesStore.sortOrder = 'asc'">
+                  По названию (А-Я)
+                </div>
+              </Dropdown>
             </div>
           </div>
 
-          <p v-if="note.content" class="note-content">
-            {{ note.content.substring(0, 150) }}{{ note.content.length > 150 ? '...' : '' }}
-          </p>
+          <div v-if="notesStore.loading" class="loading">Загрузка...</div>
 
-          <div v-if="note.tags && note.tags.length > 0" class="note-tags">
-            <TagItem
-              v-for="tag in note.tags"
-              :key="tag.id"
-              :tag="tag"
-            />
+          <div v-else-if="notesStore.filteredNotes.length === 0" class="empty-state">
+            <p>Нет заметок</p>
+            <router-link to="/note/new" class="create-link">Создать первую заметку</router-link>
           </div>
 
-          <div class="note-footer">
-            <span class="note-date">
-              {{ formatDate(note.updatedAt) }}
-            </span>
+          <div v-else class="notes-grid">
+            <div
+              v-for="note in notesStore.filteredNotes"
+              :key="note.id"
+              class="note-card"
+              @click="$router.push(`/note/${note.id}`)"
+            >
+              <div class="note-header">
+                <h3>{{ note.title }}</h3>
+                <div class="note-actions">
+                  <button
+                    @click.stop="notesStore.toggleFavorite(note.id)"
+                    class="icon-btn"
+                    :class="{ active: note.isFavorite }"
+                  >
+                    ⭐
+                  </button>
+                  <button
+                    @click.stop="notesStore.toggleArchive(note.id)"
+                    class="icon-btn"
+                  >
+                    📦
+                  </button>
+                </div>
+              </div>
+
+              <p v-if="note.content" class="note-content">
+                {{ note.content.substring(0, 150) }}{{ note.content.length > 150 ? '...' : '' }}
+              </p>
+
+              <div v-if="note.tags && note.tags.length > 0" class="note-tags">
+                <TagItem
+                  v-for="tag in note.tags"
+                  :key="tag.id"
+                  :tag="tag"
+                />
+              </div>
+
+              <div class="note-footer">
+                <span class="note-date">
+                  {{ formatDate(note.updatedAt) }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -120,6 +120,7 @@ import { useNotesStore } from '@/stores/notes'
 import Navigation from '@/components/Navigation.vue'
 import TagItem from '@/components/TagItem.vue'
 import Dropdown from '@/components/Dropdown.vue'
+import TagsSidebar from '@/components/TagsSidebar.vue'
 
 const notesStore = useNotesStore()
 
@@ -141,6 +142,16 @@ const formatDate = (date: Date) => {
 .notes-page {
   min-height: 100vh;
   background: #f5f5f5;
+}
+
+.notes-layout {
+  display: flex;
+  min-height: calc(100vh - 60px);
+}
+
+.main-content {
+  flex: 1;
+  overflow-x: hidden;
 }
 
 .container {
@@ -209,21 +220,7 @@ const formatDate = (date: Date) => {
   cursor: pointer;
 }
 
-.tags-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
 
-.tag-filter-item {
-  display: flex;
-  align-items: center;
-}
-
-.tag-label {
-  cursor: pointer;
-  margin-left: 4px;
-}
 
 .dropdown-item {
   padding: 8px 16px;

@@ -3,10 +3,8 @@ import {
   collection, 
   query, 
   where, 
-  orderBy, 
   getDocs, 
   doc, 
-  getDoc,
   addDoc, 
   updateDoc, 
   deleteDoc,
@@ -23,10 +21,12 @@ export const useNotesStore = defineStore('notes', {
     tags: [] as Tag[],
     loading: false,
     searchQuery: '',
+    tagSearchQuery: '',
     selectedTags: [] as string[],
     sortBy: 'updatedAt' as 'createdAt' | 'updatedAt' | 'title',
     sortOrder: 'desc' as 'asc' | 'desc',
-    showArchived: false
+    showArchived: false,
+    showFavorites: false
   }),
 
   getters: {
@@ -38,6 +38,11 @@ export const useNotesStore = defineStore('notes', {
         filtered = filtered.filter(note => !note.isArchived)
       }
 
+      // Filter by favorites
+      if (state.showFavorites) {
+        filtered = filtered.filter(note => note.isFavorite)
+      }
+
       // Filter by search query
       if (state.searchQuery) {
         const query = state.searchQuery.toLowerCase()
@@ -47,7 +52,18 @@ export const useNotesStore = defineStore('notes', {
         )
       }
 
-      // Filter by tags
+      // Filter by tag search query
+      if (state.tagSearchQuery) {
+        const tagQuery = state.tagSearchQuery.toLowerCase()
+        filtered = filtered.filter(note => {
+          if (!note.tags || note.tags.length === 0) return false
+          return note.tags.some(tag => 
+            tag.name.toLowerCase().includes(tagQuery)
+          )
+        })
+      }
+
+      // Filter by selected tags
       if (state.selectedTags.length > 0) {
         filtered = filtered.filter(note => {
           if (!note.tags || note.tags.length === 0) return false
@@ -140,15 +156,29 @@ export const useNotesStore = defineStore('notes', {
       const authStore = useAuthStore()
       if (!authStore.user) return
 
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c901b149-d7f0-4073-b956-292c944df986',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'stores/notes.ts:150',message:'fetchTags called',data:{userId:authStore.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+
       try {
         const tagsRef = collection(db, 'tags')
+        // Убираем orderBy из запроса, чтобы избежать необходимости в составном индексе
+        // Сортировка будет выполнена на клиенте
         const q = query(
           tagsRef,
-          where('userId', '==', authStore.user.id),
-          orderBy('createdAt', 'desc')
+          where('userId', '==', authStore.user.id)
         )
         
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/c901b149-d7f0-4073-b956-292c944df986',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'stores/notes.ts:160',message:'About to execute Firestore query',data:{hasOrderBy:true,hasWhere:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        
         const snapshot = await getDocs(q)
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/c901b149-d7f0-4073-b956-292c944df986',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'stores/notes.ts:163',message:'Query executed successfully',data:{docsCount:snapshot.docs.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        
         this.tags = snapshot.docs.map(doc => {
           const data = doc.data()
           return {
@@ -160,6 +190,9 @@ export const useNotesStore = defineStore('notes', {
           } as Tag
         })
 
+        // Сортируем на клиенте по дате создания (новые сначала)
+        this.tags.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+
         // Calculate note counts for tags
         this.tags = this.tags.map(tag => ({
           ...tag,
@@ -168,6 +201,9 @@ export const useNotesStore = defineStore('notes', {
           ).length
         }))
       } catch (error: any) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/c901b149-d7f0-4073-b956-292c944df986',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'stores/notes.ts:185',message:'Error in fetchTags',data:{errorMessage:error?.message,errorCode:error?.code,isIndexError:error?.code?.includes('index')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         console.error('Error fetching tags:', error)
         throw error
       }
@@ -201,7 +237,7 @@ export const useNotesStore = defineStore('notes', {
       }
     },
 
-    async updateNote(id: string, updates: Partial<Note> & { tags?: string[] }) {
+    async updateNote(id: string, updates: Omit<Partial<Note>, 'tags'> & { tags?: string[] }) {
       const authStore = useAuthStore()
       if (!authStore.user) throw new Error('Not authenticated')
 

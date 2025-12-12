@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/firebase/config'
@@ -71,6 +71,9 @@ const formData = ref({
 })
 
 onMounted(async () => {
+  // Загружаем теги для автодополнения
+  await notesStore.fetchTags()
+  
   const noteId = route.params.id as string
   if (noteId && noteId !== 'new') {
     await loadNote(noteId)
@@ -133,6 +136,8 @@ const handleSubmit = async () => {
         tags: formData.value.tags
       })
     }
+    // Убеждаемся, что теги обновлены перед редиректом
+    await notesStore.fetchTags()
     router.push(note.value ? `/note/${note.value.id}` : '/')
   } catch (error) {
     console.error('Error saving note:', error)

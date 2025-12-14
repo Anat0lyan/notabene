@@ -81,6 +81,21 @@
           </div>
         </div>
 
+        <!-- Модальное окно для создания задачи -->
+        <div v-if="showTaskForm" class="modal-overlay" @click.self="showTaskForm = false">
+          <div class="modal-content">
+            <TaskForm
+              @submit="handleCreateTask"
+              @cancel="showTaskForm = false"
+            />
+          </div>
+        </div>
+
+        <!-- Фиксированная кнопка добавления задачи -->
+        <button @click="showTaskForm = true" class="new-task-btn floating">
+          + Новая задача
+        </button>
+
         <!-- Favorite Notes -->
         <div class="favorites-section">
           <h2>Избранные заметки</h2>
@@ -111,15 +126,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useTasksStore } from '@/stores/tasks'
 import { useNotesStore } from '@/stores/notes'
 import Navigation from '@/components/Navigation.vue'
 import TaskCard from '@/components/TaskCard.vue'
+import TaskForm from '@/components/TaskForm.vue'
 import { linkifyText } from '@/utils/textUtils'
 
 const tasksStore = useTasksStore()
 const notesStore = useNotesStore()
+const showTaskForm = ref(false)
 
 const filters = [
   { value: 'all', label: 'Все' },
@@ -146,6 +163,16 @@ const handleEditTask = (task: any) => {
 const handleDeleteTask = async (taskId: string) => {
   if (confirm('Удалить задачу?')) {
     await tasksStore.deleteTask(taskId)
+  }
+}
+
+const handleCreateTask = async (taskData: any) => {
+  try {
+    await tasksStore.createTask(taskData)
+    showTaskForm.value = false
+    await tasksStore.fetchStats()
+  } catch (error) {
+    console.error('Ошибка при создании задачи:', error)
   }
 }
 </script>
@@ -181,29 +208,71 @@ h1 {
 }
 
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+
+.stats-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.stats-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.stats-grid::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.stats-grid::-webkit-scrollbar-thumb:hover {
+  background: #999;
 }
 
 .stat-card {
   background: white;
   border-radius: 8px;
-  padding: 24px;
+  padding: 12px 16px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 1;
+  min-width: 100px;
+  white-space: nowrap;
 }
 
 .stat-value {
-  font-size: 36px;
+  font-size: 24px;
   font-weight: bold;
   color: #667eea;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 12px;
   color: #666;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 10px 12px;
+    min-width: 80px;
+  }
+  
+  .stat-value {
+    font-size: 20px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+  }
 }
 
 .filters-section {
@@ -325,5 +394,76 @@ h1 {
 
 .note-preview :deep(.text-link:hover) {
   color: #5568d3;
+}
+
+/* Фиксированная кнопка добавления задачи */
+.new-task-btn.floating {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  background: #667eea;
+  color: white;
+  padding: 16px 24px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transition: all 0.2s;
+  animation: fadeInUp 0.3s ease;
+}
+
+.new-task-btn.floating:hover {
+  background: #5568d3;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 767px) {
+  .new-task-btn.floating {
+    bottom: 20px;
+    right: 20px;
+    padding: 14px 20px;
+    font-size: 14px;
+    bottom: max(20px, calc(20px + env(safe-area-inset-bottom, 0px)));
+  }
+}
+
+/* Модальное окно */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 </style>

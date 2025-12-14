@@ -8,10 +8,17 @@
         <router-link 
           to="/" 
           class="nav-link"
+          @click="closeMenu"
+        >
+          Избранное
+        </router-link>
+        <router-link 
+          to="/notes" 
+          class="nav-link"
           :class="{ 'router-link-active': isNotesActive }"
           @click="closeMenu"
         >
-          Заметки
+          Все заметки
         </router-link>
         <router-link 
           to="/dashboard" 
@@ -69,7 +76,7 @@ const isMobile = ref(false)
 // Проверка, активна ли страница заметок (включая все подстраницы)
 const isNotesActive = computed(() => {
   const path = route.path
-  return path === '/' || path.startsWith('/note')
+  return path === '/notes' || path.startsWith('/note')
 })
 
 const checkMobile = () => {

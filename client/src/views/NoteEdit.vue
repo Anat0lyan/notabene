@@ -188,6 +188,41 @@ const handleCancel = () => {
   padding: 32px;
 }
 
+@media (max-width: 767px) {
+  .container {
+    padding: 16px;
+  }
+
+  .page-header {
+    margin-bottom: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .note-form {
+    padding: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 24px;
+    padding-top: 20px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    padding: 14px 24px;
+  }
+}
+
 .form-group {
   margin-bottom: 24px;
 }

@@ -1,8 +1,16 @@
 <template>
-  <div class="tags-sidebar">
-    <div class="sidebar-header">
-      <h2>Теги</h2>
-    </div>
+    <!-- Overlay для мобильных -->
+    <div 
+      v-if="isOpen && isMobile" 
+      class="sidebar-overlay" 
+      @click="closeSidebar"
+    ></div>
+    
+    <div class="tags-sidebar" :class="{ open: isOpen, mobile: isMobile }">
+      <div class="sidebar-header">
+        <h2>Теги</h2>
+        <button v-if="isMobile" @click="closeSidebar" class="close-sidebar-btn">×</button>
+      </div>
 
     <div class="search-box">
       <input
@@ -70,14 +78,65 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, onUnmounted, watch } from 'vue'
 import { useNotesStore } from '@/stores/notes'
 import TagItem from '@/components/TagItem.vue'
 import type { Tag } from '@/types'
 
+const props = defineProps<{
+  isOpen?: boolean
+  onClose?: () => void
+}>()
+
+const emit = defineEmits<{
+  close: []
+}>()
+
 const notesStore = useNotesStore()
 const showColorPicker = ref(false)
 const selectedTag = ref<Tag | null>(null)
+const isMobile = ref(false)
+const isOpen = ref(false)
+
+// Определение мобильного устройства
+const checkMobile = () => {
+  const wasMobile = isMobile.value
+  isMobile.value = window.innerWidth < 768
+  
+  if (!isMobile.value) {
+    // На десктопе всегда открыт
+    isOpen.value = true
+  } else {
+    // На мобильных используем значение из props
+    isOpen.value = props.isOpen ?? false
+  }
+}
+
+// Синхронизация с props
+watch(() => props.isOpen, (newVal) => {
+  if (isMobile.value) {
+    isOpen.value = newVal ?? false
+  }
+}, { immediate: true })
+
+onMounted(async () => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  await notesStore.fetchTags()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
+// Синхронизация с props
+const closeSidebar = () => {
+  isOpen.value = false
+  if (props.onClose) {
+    props.onClose()
+  }
+  emit('close')
+}
 
 // Палитра цветов
 const colorPalette = [
@@ -171,6 +230,26 @@ const removeColor = async () => {
 </script>
 
 <style scoped>
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .tags-sidebar {
   width: 280px;
   background: white;
@@ -181,11 +260,38 @@ const removeColor = async () => {
   display: flex;
   flex-direction: column;
   box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+/* Мобильная версия - bottom sheet */
+@media (max-width: 767px) {
+  .tags-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 80vh;
+    max-height: 600px;
+    border-radius: 16px 16px 0 0;
+    border-right: none;
+    border-top: 1px solid #e0e0e0;
+    transform: translateY(100%);
+    z-index: 1000;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .tags-sidebar.open {
+    transform: translateY(0);
+  }
 }
 
 .sidebar-header {
   padding: 20px;
   border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .sidebar-header h2 {
@@ -193,6 +299,38 @@ const removeColor = async () => {
   font-size: 20px;
   color: #333;
   font-weight: 600;
+}
+
+.close-sidebar-btn {
+  background: transparent;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.close-sidebar-btn:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+@media (min-width: 768px) {
+  .close-sidebar-btn {
+    display: none;
+  }
+
+  .sidebar-overlay {
+    display: none;
+  }
 }
 
 .search-box {
@@ -343,6 +481,21 @@ const removeColor = async () => {
   margin-bottom: 20px;
 }
 
+@media (max-width: 767px) {
+  .color-palette {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .color-picker-content {
+    padding: 16px;
+  }
+
+  .color-picker-header h3 {
+    font-size: 16px;
+  }
+}
+
 .color-option {
   width: 100%;
   aspect-ratio: 1;
@@ -402,3 +555,4 @@ const removeColor = async () => {
   background: #e0e0e0;
 }
 </style>
+

@@ -3,12 +3,22 @@
     <Navigation />
     
     <div class="notes-layout">
-      <TagsSidebar />
+      <TagsSidebar :isOpen="sidebarOpen" @close="sidebarOpen = false" />
       
       <div class="main-content">
         <div class="container">
           <div class="page-header">
-            <h1>Мои заметки</h1>
+            <div class="header-left">
+              <button 
+                v-if="isMobile" 
+                @click="sidebarOpen = true" 
+                class="tags-toggle-btn"
+                title="Показать теги"
+              >
+                🏷️
+              </button>
+              <h1>Мои заметки</h1>
+            </div>
             <router-link to="/note/new" class="new-note-btn">+ Новая заметка</router-link>
           </div>
 
@@ -115,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref, onUnmounted } from 'vue'
 import { useNotesStore } from '@/stores/notes'
 import Navigation from '@/components/Navigation.vue'
 import TagItem from '@/components/TagItem.vue'
@@ -123,10 +133,25 @@ import Dropdown from '@/components/Dropdown.vue'
 import TagsSidebar from '@/components/TagsSidebar.vue'
 
 const notesStore = useNotesStore()
+const sidebarOpen = ref(false)
+const isMobile = ref(false)
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+  if (!isMobile.value) {
+    sidebarOpen.value = true // На десктопе всегда открыт
+  }
+}
 
 onMounted(async () => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
   await notesStore.fetchNotes()
   await notesStore.fetchTags()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
 })
 
 const formatDate = (date: Date) => {
@@ -165,6 +190,69 @@ const formatDate = (date: Date) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tags-toggle-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: none;
+}
+
+.tags-toggle-btn:hover {
+  background: #5568d3;
+}
+
+@media (max-width: 767px) {
+  .notes-layout {
+    position: relative;
+  }
+
+  .container {
+    padding: 16px;
+  }
+
+  .page-header {
+    margin-bottom: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .tags-toggle-btn {
+    display: block;
+  }
+
+  .new-note-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .filters {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .notes-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .note-card {
+    padding: 16px;
+  }
 }
 
 .page-header h1 {

@@ -46,10 +46,18 @@ export const useNotesStore = defineStore('notes', {
       // Filter by search query
       if (state.searchQuery) {
         const query = state.searchQuery.toLowerCase()
-        filtered = filtered.filter(note => 
-          note.title.toLowerCase().includes(query) ||
-          (note.content && note.content.toLowerCase().includes(query))
-        )
+        filtered = filtered.filter(note => {
+          // Поиск по заголовку
+          const titleMatch = note.title.toLowerCase().includes(query)
+          // Поиск по содержимому
+          const contentMatch = note.content && note.content.toLowerCase().includes(query)
+          // Поиск по тегам
+          const tagMatch = note.tags && note.tags.some(tag => 
+            tag.name.toLowerCase().includes(query)
+          )
+          
+          return titleMatch || contentMatch || tagMatch
+        })
       }
 
       // Filter by tag search query

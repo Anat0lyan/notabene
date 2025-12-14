@@ -1,24 +1,20 @@
 <template>
   <nav class="navigation">
     <div class="nav-content">
-      <router-link to="/" class="logo">Notabene</router-link>
+      <div class="logo-section">
+        <router-link to="/" class="logo">Notabene</router-link>
+        <span v-if="isMobile" class="current-page-title">{{ currentPageTitle }}</span>
+      </div>
       
       <!-- Навигационные ссылки -->
       <div class="nav-links" :class="{ open: menuOpen }">
         <router-link 
           to="/" 
           class="nav-link"
+          :class="{ 'router-link-active': isHomeActive }"
           @click="closeMenu"
         >
           Избранное
-        </router-link>
-        <router-link 
-          to="/notes" 
-          class="nav-link"
-          :class="{ 'router-link-active': isNotesActive }"
-          @click="closeMenu"
-        >
-          Все заметки
         </router-link>
         <router-link 
           to="/dashboard" 
@@ -52,6 +48,8 @@
           @click="toggleMenu" 
           class="hamburger-btn"
           :class="{ active: menuOpen }"
+          :aria-label="menuOpen ? 'Закрыть меню' : 'Открыть меню'"
+          title="Меню"
         >
           <span></span>
           <span></span>
@@ -73,10 +71,20 @@ const authStore = useAuthStore()
 const menuOpen = ref(false)
 const isMobile = ref(false)
 
-// Проверка, активна ли страница заметок (включая все подстраницы)
-const isNotesActive = computed(() => {
+// Проверка, активна ли главная страница (избранное)
+const isHomeActive = computed(() => {
+  return route.path === '/'
+})
+
+// Название текущей страницы для мобильной версии
+const currentPageTitle = computed(() => {
   const path = route.path
-  return path === '/notes' || path.startsWith('/note')
+  if (path === '/') return 'Избранное'
+  if (path === '/dashboard') return 'Дашборд'
+  if (path.startsWith('/note/') && path.endsWith('/edit')) return 'Редактирование'
+  if (path.startsWith('/note/')) return 'Заметка'
+  if (path === '/note/new') return 'Новая заметка'
+  return 'Notabene'
 })
 
 const checkMobile = () => {
@@ -128,11 +136,23 @@ const handleLogout = async () => {
   height: 60px;
 }
 
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .logo {
   font-size: 24px;
   font-weight: bold;
   color: #667eea;
   text-decoration: none;
+}
+
+.current-page-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
 }
 
 .nav-links {
@@ -174,8 +194,22 @@ const handleLogout = async () => {
 }
 
 @media (max-width: 767px) {
+  .logo-section {
+    flex: 1;
+  }
+
+  .logo {
+    font-size: 20px;
+  }
+
+  .current-page-title {
+    font-size: 14px;
+    color: #666;
+  }
+
   .hamburger-btn {
     display: flex;
+    margin-left: auto;
   }
 
   .nav-links {
@@ -228,14 +262,11 @@ const handleLogout = async () => {
 
   .nav-user {
     gap: 8px;
+    margin-left: auto;
   }
 
   .username {
     display: none;
-  }
-
-  .logo {
-    font-size: 20px;
   }
 }
 

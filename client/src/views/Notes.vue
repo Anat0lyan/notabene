@@ -17,7 +17,7 @@
               >
                 🏷️
               </button>
-              <h1>Мои заметки</h1>
+              <h1>{{ pageTitle }}</h1>
             </div>
           </div>
           
@@ -129,7 +129,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, onUnmounted } from 'vue'
+import { onMounted, ref, onUnmounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useNotesStore } from '@/stores/notes'
 import Navigation from '@/components/Navigation.vue'
 import TagItem from '@/components/TagItem.vue'
@@ -137,9 +138,15 @@ import Dropdown from '@/components/Dropdown.vue'
 import TagsSidebar from '@/components/TagsSidebar.vue'
 import { linkifyText } from '@/utils/textUtils'
 
+const route = useRoute()
 const notesStore = useNotesStore()
 const sidebarOpen = ref(false)
 const isMobile = ref(false)
+
+// Динамический заголовок страницы в зависимости от фильтра
+const pageTitle = computed(() => {
+  return notesStore.showFavorites ? 'Избранное' : 'Мои заметки'
+})
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768
@@ -151,6 +158,9 @@ const checkMobile = () => {
 onMounted(async () => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  // На главной странице включаем фильтр избранных
+  // На других страницах показываем все заметки
+  notesStore.showFavorites = route.path === '/'
   await notesStore.fetchNotes()
   await notesStore.fetchTags()
 })

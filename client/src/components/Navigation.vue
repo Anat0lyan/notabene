@@ -3,18 +3,6 @@
     <div class="nav-content">
       <router-link to="/" class="logo">Notabene</router-link>
       
-      <!-- Гамбургер-меню для мобильных -->
-      <button 
-        v-if="isMobile" 
-        @click="toggleMenu" 
-        class="hamburger-btn"
-        :class="{ active: menuOpen }"
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-
       <!-- Навигационные ссылки -->
       <div class="nav-links" :class="{ open: menuOpen }">
         <router-link 
@@ -32,11 +20,36 @@
         >
           Дашборд
         </router-link>
+        <!-- Кнопка выхода в меню на мобильных -->
+        <button 
+          v-if="isMobile" 
+          @click="handleLogout" 
+          class="logout-menu-btn"
+        >
+          Выйти
+        </button>
       </div>
 
       <div class="nav-user">
         <span class="username">{{ authStore.username }}</span>
-        <button @click="handleLogout" class="logout-btn">Выйти</button>
+        <button 
+          v-if="!isMobile" 
+          @click="handleLogout" 
+          class="logout-btn"
+        >
+          Выйти
+        </button>
+        <!-- Гамбургер-меню для мобильных -->
+        <button 
+          v-if="isMobile" 
+          @click="toggleMenu" 
+          class="hamburger-btn"
+          :class="{ active: menuOpen }"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
     </div>
   </nav>
@@ -174,7 +187,7 @@ const handleLogout = async () => {
   }
 
   .nav-links.open {
-    max-height: 200px;
+    max-height: 300px;
   }
 
   .nav-link {
@@ -184,7 +197,26 @@ const handleLogout = async () => {
   }
 
   .nav-link:last-child {
-    border-bottom: none;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  .logout-menu-btn {
+    width: 100%;
+    padding: 16px 20px;
+    background: #f5f5f5;
+    color: #333;
+    border: none;
+    border-radius: 0;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .logout-menu-btn:hover {
+    background: #e0e0e0;
   }
 
   .nav-user {
@@ -193,11 +225,6 @@ const handleLogout = async () => {
 
   .username {
     display: none;
-  }
-
-  .logout-btn {
-    padding: 6px 12px;
-    font-size: 12px;
   }
 
   .logo {

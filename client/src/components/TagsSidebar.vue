@@ -29,17 +29,21 @@
         :class="{ selected: isTagSelected(tag.id) }"
         @click="toggleTag(tag.id)"
       >
-        <TagItem :tag="tag" />
-        <span v-if="tag.noteCount !== undefined" class="tag-count">
-          ({{ tag.noteCount }})
-        </span>
-        <button
-          @click.stop="openColorPicker(tag)"
-          class="color-picker-btn"
-          title="Изменить цвет"
-        >
-          🎨
-        </button>
+        <div class="tag-content">
+          <TagItem :tag="tag" />
+        </div>
+        <div class="tag-meta">
+          <span v-if="tag.noteCount !== undefined" class="tag-count">
+            ({{ tag.noteCount }})
+          </span>
+          <button
+            @click.stop="openColorPicker(tag)"
+            class="color-picker-btn"
+            title="Изменить цвет"
+          >
+            🎨
+          </button>
+        </div>
       </div>
 
       <div v-if="filteredTags.length === 0" class="empty-tags">
@@ -100,7 +104,6 @@ const isOpen = ref(false)
 
 // Определение мобильного устройства
 const checkMobile = () => {
-  const wasMobile = isMobile.value
   isMobile.value = window.innerWidth < 768
   
   if (!isMobile.value) {
@@ -271,8 +274,6 @@ const removeColor = async () => {
     left: 0;
     right: 0;
     width: 100%;
-    height: 80vh;
-    max-height: 600px;
     border-radius: 16px 16px 0 0;
     border-right: none;
     border-top: 1px solid #e0e0e0;
@@ -365,7 +366,20 @@ const removeColor = async () => {
   padding: 8px 20px;
   cursor: pointer;
   transition: background-color 0.2s;
+  gap: 12px;
+}
+
+.tag-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tag-meta {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .tag-item-wrapper:hover {
@@ -385,6 +399,8 @@ const removeColor = async () => {
   font-size: 12px;
   color: #999;
   white-space: nowrap;
+  min-width: 40px;
+  text-align: right;
 }
 
 .empty-tags {

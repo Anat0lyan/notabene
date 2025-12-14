@@ -19,8 +19,10 @@
               </button>
               <h1>Мои заметки</h1>
             </div>
-            <router-link to="/note/new" class="new-note-btn">+ Новая заметка</router-link>
           </div>
+          
+          <!-- Фиксированная кнопка "Новая заметка" -->
+          <router-link to="/note/new" class="new-note-btn floating">+ Новая заметка</router-link>
 
           <div class="filters">
             <div class="search-box">
@@ -99,9 +101,11 @@
                 </div>
               </div>
 
-              <p v-if="note.content" class="note-content">
-                {{ note.content.substring(0, 150) }}{{ note.content.length > 150 ? '...' : '' }}
-              </p>
+              <p 
+                v-if="note.content" 
+                class="note-content"
+                v-html="linkifyText(note.content.substring(0, 150) + (note.content.length > 150 ? '...' : ''))"
+              ></p>
 
               <div v-if="note.tags && note.tags.length > 0" class="note-tags">
                 <TagItem
@@ -131,6 +135,7 @@ import Navigation from '@/components/Navigation.vue'
 import TagItem from '@/components/TagItem.vue'
 import Dropdown from '@/components/Dropdown.vue'
 import TagsSidebar from '@/components/TagsSidebar.vue'
+import { linkifyText } from '@/utils/textUtils'
 
 const notesStore = useNotesStore()
 const sidebarOpen = ref(false)
@@ -235,11 +240,6 @@ const formatDate = (date: Date) => {
     display: block;
   }
 
-  .new-note-btn {
-    padding: 10px 16px;
-    font-size: 14px;
-  }
-
   .filters {
     padding: 16px;
     margin-bottom: 16px;
@@ -268,10 +268,57 @@ const formatDate = (date: Date) => {
   border-radius: 8px;
   font-weight: 500;
   transition: background 0.2s;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .new-note-btn:hover {
   background: #5568d3;
+}
+
+/* Фиксированная кнопка */
+.new-note-btn.floating {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  padding: 16px 24px;
+  font-size: 16px;
+  border-radius: 50px;
+  animation: fadeInUp 0.3s ease;
+}
+
+.new-note-btn.floating:hover {
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 767px) {
+  .new-note-btn.floating {
+    bottom: 20px;
+    right: 20px;
+    padding: 14px 20px;
+    font-size: 14px;
+    border-radius: 50px;
+  }
+  
+  /* Учитываем безопасную зону на мобильных */
+  .new-note-btn.floating {
+    bottom: max(20px, calc(20px + env(safe-area-inset-bottom, 0px)));
+  }
 }
 
 .filters {
@@ -396,6 +443,16 @@ const formatDate = (date: Date) => {
   font-size: 14px;
   line-height: 1.6;
   margin-bottom: 12px;
+}
+
+.note-content :deep(.text-link) {
+  color: #667eea;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.note-content :deep(.text-link:hover) {
+  color: #5568d3;
 }
 
 .note-tags {

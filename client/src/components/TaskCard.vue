@@ -13,7 +13,11 @@
       </span>
     </div>
 
-    <p v-if="task.description" class="task-description">{{ task.description }}</p>
+    <p 
+      v-if="task.description" 
+      class="task-description"
+      v-html="linkifyText(task.description)"
+    ></p>
 
     <div class="task-meta">
       <span v-if="task.dueDate" class="due-date" :class="{ overdue: isOverdue }">
@@ -35,6 +39,7 @@
 import { computed } from 'vue'
 import type { Task } from '@/types'
 import { useTasksStore } from '@/stores/tasks'
+import { linkifyText } from '@/utils/textUtils'
 
 const props = defineProps<{
   task: Task
@@ -136,6 +141,16 @@ const toggleTask = () => {
   font-size: 14px;
   margin: 8px 0;
   line-height: 1.5;
+}
+
+.task-description :deep(.text-link) {
+  color: #667eea;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.task-description :deep(.text-link:hover) {
+  color: #5568d3;
 }
 
 .task-meta {

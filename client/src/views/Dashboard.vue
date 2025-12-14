@@ -97,9 +97,11 @@
               @click="$router.push(`/note/${note.id}`)"
             >
               <h3>{{ note.title }}</h3>
-              <p v-if="note.content" class="note-preview">
-                {{ note.content.substring(0, 100) }}{{ note.content.length > 100 ? '...' : '' }}
-              </p>
+              <p 
+                v-if="note.content" 
+                class="note-preview"
+                v-html="linkifyText(note.content.substring(0, 100) + (note.content.length > 100 ? '...' : ''))"
+              ></p>
             </div>
           </div>
         </div>
@@ -114,6 +116,7 @@ import { useTasksStore } from '@/stores/tasks'
 import { useNotesStore } from '@/stores/notes'
 import Navigation from '@/components/Navigation.vue'
 import TaskCard from '@/components/TaskCard.vue'
+import { linkifyText } from '@/utils/textUtils'
 
 const tasksStore = useTasksStore()
 const notesStore = useNotesStore()
@@ -312,5 +315,15 @@ h1 {
   color: #666;
   margin: 0;
   line-height: 1.5;
+}
+
+.note-preview :deep(.text-link) {
+  color: #667eea;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.note-preview :deep(.text-link:hover) {
+  color: #5568d3;
 }
 </style>

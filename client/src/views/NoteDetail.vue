@@ -9,28 +9,30 @@
         <div class="note-header">
           <div class="header-actions">
             <router-link to="/" class="back-btn">← Назад</router-link>
-            <div class="action-buttons">
-              <button
-                @click="toggleFavorite"
-                class="action-btn"
-                :class="{ active: note.isFavorite }"
-              >
-                ⭐ {{ note.isFavorite ? 'В избранном' : 'В избранное' }}
-              </button>
-              <button
-                @click="toggleArchive"
-                class="action-btn"
-              >
-                {{ note.isArchived ? 'Разархивировать' : 'Архивировать' }}
-              </button>
-              <router-link :to="`/note/${note.id}/edit`" class="action-btn">
-                Редактировать
-              </router-link>
-              <button @click="handleDelete" class="action-btn delete">
-                Удалить
-              </button>
-            </div>
           </div>
+        </div>
+        
+        <!-- Фиксированные кнопки действий -->
+        <div class="action-buttons floating">
+          <button
+            @click="toggleFavorite"
+            class="action-btn"
+            :class="{ active: note.isFavorite }"
+          >
+            ⭐ {{ note.isFavorite ? 'В избранном' : 'В избранное' }}
+          </button>
+          <button
+            @click="toggleArchive"
+            class="action-btn"
+          >
+            {{ note.isArchived ? 'Разархивировать' : 'Архивировать' }}
+          </button>
+          <router-link :to="`/note/${note.id}/edit`" class="action-btn">
+            Редактировать
+          </router-link>
+          <button @click="handleDelete" class="action-btn delete">
+            Удалить
+          </button>
         </div>
 
         <div class="note-content">
@@ -45,7 +47,11 @@
           </div>
 
           <div class="note-body">
-            <p v-if="note.content" class="content-text">{{ note.content }}</p>
+            <p 
+              v-if="note.content" 
+              class="content-text"
+              v-html="linkifyText(note.content)"
+            ></p>
             <p v-else class="empty-content">Нет содержимого</p>
           </div>
 
@@ -67,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@/firebase/config'
@@ -75,6 +81,7 @@ import { useNotesStore } from '@/stores/notes'
 import Navigation from '@/components/Navigation.vue'
 import TagItem from '@/components/TagItem.vue'
 import NoteTasks from '@/components/NoteTasks.vue'
+import { linkifyText } from '@/utils/textUtils'
 import type { Note, Tag } from '@/types'
 
 const route = useRoute()
@@ -204,7 +211,7 @@ const formatDate = (date: Date) => {
 
 .header-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
 }
 
@@ -218,6 +225,69 @@ const formatDate = (date: Date) => {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* Фиксированные кнопки действий */
+.action-buttons.floating {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Добавляем отступ снизу для контента, чтобы он не перекрывался кнопками */
+.note-detail {
+  padding-bottom: 100px;
+}
+
+@media (max-width: 767px) {
+  .action-buttons.floating {
+    padding: 12px 16px;
+    padding-bottom: max(12px, calc(12px + env(safe-area-inset-bottom, 0px)));
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+    align-items: center;
+  }
+  
+  .action-buttons.floating::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .action-buttons.floating .action-btn {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    font-size: 14px;
+    white-space: nowrap;
+    min-width: fit-content;
+  }
+  
+  .note-detail {
+    padding-bottom: 90px;
+  }
 }
 
 .action-btn {
@@ -268,6 +338,16 @@ const formatDate = (date: Date) => {
   line-height: 1.8;
   color: #333;
   white-space: pre-wrap;
+}
+
+.content-text :deep(.text-link) {
+  color: #667eea;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.content-text :deep(.text-link:hover) {
+  color: #5568d3;
 }
 
 .empty-content {
